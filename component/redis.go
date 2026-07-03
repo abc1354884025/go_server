@@ -45,7 +45,12 @@ func (r *redisComponent) SetName(ctx context.Context, key string, name string) e
 }
 
 //NewRedisComponent 初始化一个实现了HelloWorldComponent接口的RedisComponent
+// 如果 REDIS_ADDRESS 环境变量未设置或连接失败，返回 nil
 func NewRedisComponent() *redisComponent {
+	if redisAddr == "" {
+		fmt.Println("redisClient init warning: REDIS_ADDRESS not set, skip redis component")
+		return nil
+	}
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Username: redisUserName,
@@ -54,8 +59,8 @@ func NewRedisComponent() *redisComponent {
 	})
 	_, err := rdb.Ping(context.TODO()).Result()
 	if err != nil {
-		fmt.Printf("redisClient init error. err %s", err)
-		panic(fmt.Sprintf("redis init failed. err %s\n", err))
+		fmt.Printf("redisClient init warning: ping error: %s\n", err)
+		return nil
 	}
 	return &redisComponent{
 		client: rdb,

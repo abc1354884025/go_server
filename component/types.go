@@ -37,8 +37,14 @@ var (
 func GetComponent(component string) (HelloWorldComponent, error) {
 	switch component {
 	case Mongo:
+		if mongoHelloWorld == nil {
+			return nil, fmt.Errorf("mongo component not configured")
+		}
 		return mongoHelloWorld, nil
 	case Redis:
+		if redisHelloWorld == nil {
+			return nil, fmt.Errorf("redis component not configured")
+		}
 		return redisHelloWorld, nil
 	default:
 		return nil, fmt.Errorf("invalid component")
@@ -48,13 +54,18 @@ func GetComponent(component string) (HelloWorldComponent, error) {
 func InitComponents() {
 	mongoHelloWorld = NewMongoComponent()
 	redisHelloWorld = NewRedisComponent()
-	ctx := context.TODO()
-	err := mongoHelloWorld.SetName(ctx, "name", "mongodb")
-	if err != nil {
-		panic(err)
+	if mongoHelloWorld != nil {
+		ctx := context.TODO()
+		err := mongoHelloWorld.SetName(ctx, "name", "mongodb")
+		if err != nil {
+			panic(err)
+		}
 	}
-	err = redisHelloWorld.SetName(ctx, "name", "redis")
-	if err != nil {
-		panic(err)
+	if redisHelloWorld != nil {
+		ctx := context.TODO()
+		err := redisHelloWorld.SetName(ctx, "name", "redis")
+		if err != nil {
+			panic(err)
+		}
 	}
 }

@@ -76,13 +76,19 @@ func (m *mongoComponent) SetName(ctx context.Context, key string, name string) e
 }
 
 //NewMongoComponent 新建一个mongodbComponent，其实现了HelloWorldComponent接口
+// 如果 MONGO_ADDRESS 环境变量未设置或连接失败，返回 nil
 func NewMongoComponent() *mongoComponent {
+	if mongoAddr == "" {
+		fmt.Println("mongoClient init warning: MONGO_ADDRESS not set, skip mongo component")
+		return nil
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	tmp, err := url.Parse(mongoAddr)
 	if err != nil {
-		panic("mongo addr parse error")
+		fmt.Printf("mongoClient init warning: addr parse error: %s\n", err)
+		return nil
 	}
 	authSource := tmp.Query().Get("authSource")
 	credential := options.Credential{
@@ -94,8 +100,8 @@ func NewMongoComponent() *mongoComponent {
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoUrl).SetAuth(credential))
 	if err != nil {
-		fmt.Printf("mongoClient init error. err %s\n", err)
-		panic("mongo connect error")
+		fmt.Printf("mongoClient init warning: connect error: %s\n", err)
+		return nil
 	}
 
 	dataBase := "demo"
@@ -105,8 +111,8 @@ func NewMongoComponent() *mongoComponent {
 	}
 	_, err = client.Database(dataBase).Collection(collectionName).InsertOne(context.TODO(), doc)
 	if err != nil {
-		fmt.Printf("mongoClient init error. err %s\n", err)
-		panic("mongo init error")
+		fmt.Printf("mongoClient init warning: insert error: %s\n", err)
+		return nil
 	}
 	return &mongoComponent{client, dataBase}
 }
